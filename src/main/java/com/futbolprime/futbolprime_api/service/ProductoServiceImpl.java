@@ -4,6 +4,7 @@ import com.futbolprime.futbolprime_api.dto.producto.ActualizarProductoDTO;
 import com.futbolprime.futbolprime_api.dto.producto.CrearProductoDTO;
 import com.futbolprime.futbolprime_api.dto.producto.ProductoDTO;
 import com.futbolprime.futbolprime_api.model.Producto;
+import com.futbolprime.futbolprime_api.repository.MarcaRepository;
 import com.futbolprime.futbolprime_api.repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.util.Optional;
 public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
+    private final MarcaRepository marcaRepository;
 
     @Override
     public List<ProductoDTO> listarTodos() {
@@ -66,12 +68,18 @@ public class ProductoServiceImpl implements ProductoService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El stock es obligatorio y debe ser >= 0");
         }
 
-        Optional<Producto> existente = productoRepository.findBySku(skuNormalizado);
-        if (existente.isPresent()) {
+        if (productoRepository.findBySku(skuNormalizado).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un producto con ese SKU: " + skuNormalizado);
         }
 
-        // Construcción del producto (normalizar campos opcionales)
+        if (dto.getMarcaId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "marcaId es obligatorio");
+        }
+        var marcaOpt = marcaRepository.findById(dto.getMarcaId());
+        var marca = marcaOpt.orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Marca no encontrada con id: " + dto.getMarcaId()
+        ));
+
         Producto producto = Producto.builder()
                 .sku(skuNormalizado)
                 .nombre(nombreNormalizado)
@@ -81,7 +89,7 @@ public class ProductoServiceImpl implements ProductoService {
                 .talla(dto.getTalla() != null ? dto.getTalla().trim() : null)
                 .color(dto.getColor() != null ? dto.getColor().trim() : null)
                 .stock(dto.getStock())
-                .marca(dto.getMarca() != null ? dto.getMarca().trim() : null)
+                .marca(marca)
                 .descripcion(dto.getDescripcion() != null ? dto.getDescripcion().trim() : null)
                 .imagen(dto.getImagen() != null ? dto.getImagen().trim() : null)
                 .build();
@@ -136,8 +144,12 @@ public class ProductoServiceImpl implements ProductoService {
         dto.setTalla(p.getTalla());
         dto.setStock(p.getStock());
         dto.setColor(p.getColor());
-        dto.setMarca(p.getMarca());
         dto.setImagen(p.getImagen());
+        if (p.getMarca() != null) {
+            dto.setMarcaId(p.getMarca().getId());
+            dto.setMarcaNombre(p.getMarca().getNombre());
+        }
         return dto;
     }
+
 }

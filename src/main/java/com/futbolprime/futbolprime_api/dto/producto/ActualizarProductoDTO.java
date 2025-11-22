@@ -12,4 +12,5 @@ public class ActualizarProductoDTO {
     private String tipo;
     private String color;
     private String talla;
+    private Long marcaId;
 }

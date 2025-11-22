@@ -8,12 +8,11 @@ import java.util.List;
 
 public interface ListaDeseosService {
 
-    List<ListaDeseosDTO> listarPorUsuario(String usuarioId);
+    List<ListaDeseosDTO> listarPorUsuario(Long usuarioId);
 
     ListaDeseosDTO agregar(CrearListaDeseosDTO dto);
 
-    void eliminar(String usuarioId, Long productoId);
+    void eliminar(Long id);
 
-    // 🔹 NUEVO
     ListaDeseosDTO actualizar(Long id, ActualizarListaDeseosDTO dto);
 }

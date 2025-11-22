@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class CrearListaDeseosDTO {
-    private String usuarioId;
+    private Long usuarioId;
     private Long productoId;
 }

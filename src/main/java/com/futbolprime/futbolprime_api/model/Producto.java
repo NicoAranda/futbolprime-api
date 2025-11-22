@@ -42,8 +42,9 @@ public class Producto {
     @Column(nullable = false)
     private Integer stock;
 
-    @Column(length = 50)
-    private String marca;
+    @ManyToOne
+    @JoinColumn(name = "marca_id")
+    private Marca marca;
 
     @Column(columnDefinition = "TEXT")
     private String descripcion;

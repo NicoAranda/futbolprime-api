@@ -19,10 +19,10 @@ public class ListaDeseosController {
 
     private final ListaDeseosService listaDeseosService;
 
-    // GET /api/lista-deseos/{usuarioId}
-    @GetMapping("/{usuarioId}")
-    public List<ListaDeseosDTO> listarPorUsuario(@PathVariable String usuarioId) {
-        return listaDeseosService.listarPorUsuario(usuarioId);
+
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<List<ListaDeseosDTO>> listarPorUsuario(@PathVariable Long usuarioId) {
+        return ResponseEntity.ok(listaDeseosService.listarPorUsuario(usuarioId));
     }
 
     // POST /api/lista-deseos
@@ -34,20 +34,17 @@ public class ListaDeseosController {
 
     // PUT /api/lista-deseos/{id}  (actualiza el producto de un registro de la lista)
     @PutMapping("/{id}")
-    public ListaDeseosDTO actualizar(
+    public ResponseEntity<ListaDeseosDTO> actualizar(
             @PathVariable Long id,
             @RequestBody ActualizarListaDeseosDTO dto
     ) {
-        return listaDeseosService.actualizar(id, dto);
+        ListaDeseosDTO actualizado = listaDeseosService.actualizar(id, dto);
+        return ResponseEntity.ok(actualizado);
     }
 
-    // DELETE /api/lista-deseos/{usuarioId}/{productoId}
-    @DeleteMapping("/{usuarioId}/{productoId}")
-    public ResponseEntity<Void> eliminar(
-            @PathVariable String usuarioId,
-            @PathVariable Long productoId
-    ) {
-        listaDeseosService.eliminar(usuarioId, productoId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        listaDeseosService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 }

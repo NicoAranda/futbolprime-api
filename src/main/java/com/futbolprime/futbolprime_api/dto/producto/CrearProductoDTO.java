@@ -13,7 +13,7 @@ public class CrearProductoDTO {
     private String talla;
     private String color;
     private Integer stock;
-    private String marca;
+    private Long marcaId;
     private String descripcion;
     private String imagen;
 }

@@ -4,12 +4,13 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "categorias")
-@Data
-@AllArgsConstructor
+@Table(name = "usuarios")
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class Categoria {
+public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,8 +20,14 @@ public class Categoria {
     private String nombre;
 
     @Column(nullable = false, unique = true, length = 100)
-    private String slug;
+    private String email;
 
-    @Column(name = "padre_id")
-    private Long padreId;
+    @Column(nullable = false)
+    private Boolean habilitado;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false, length = 20)
+    private String rol;
 }

@@ -18,16 +18,9 @@ public class ListaDeseos {
     private Long id;
 
     @Column(name = "usuario_id", nullable = false, length = 36)
-    private String usuarioId;
+    private Long usuarioId;
 
     @Column(name = "producto_id", nullable = false)
     private Long productoId;
 
-    @Column(name = "creado_en", nullable = false)
-    private LocalDateTime creadoEn;
-
-    @PrePersist
-    public void prePersist() {
-        this.creadoEn = LocalDateTime.now();
-    }
 }
