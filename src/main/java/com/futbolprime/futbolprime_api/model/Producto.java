@@ -1,5 +1,6 @@
 package com.futbolprime.futbolprime_api.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,6 +45,7 @@ public class Producto {
 
     @ManyToOne
     @JoinColumn(name = "marca_id")
+    @JsonBackReference
     private Marca marca;
 
     @Column(columnDefinition = "TEXT")

@@ -1,18 +1,16 @@
 package com.futbolprime.futbolprime_api.service;
 
-import com.futbolprime.futbolprime_api.dto.listaDeseos.ActualizarListaDeseosDTO;
-import com.futbolprime.futbolprime_api.dto.listaDeseos.CrearListaDeseosDTO;
-import com.futbolprime.futbolprime_api.dto.listaDeseos.ListaDeseosDTO;
+import com.futbolprime.futbolprime_api.dto.listaDeseos.*;
 
 import java.util.List;
 
 public interface ListaDeseosService {
 
-    List<ListaDeseosDTO> listarPorUsuario(Long usuarioId);
+    ListaDeseosDTO obtenerPorUsuario(Long usuarioId);
 
-    ListaDeseosDTO agregar(CrearListaDeseosDTO dto);
+    ListaDeseosItemDTO agregarProducto(CrearListaDeseosItemDTO dto);
 
-    void eliminar(Long id);
+    void eliminarProducto(Long usuarioId, Long productoId);
 
-    ListaDeseosDTO actualizar(Long id, ActualizarListaDeseosDTO dto);
+    List<ListaDeseosItemDTO> listarItems(Long usuarioId);
 }

@@ -1,5 +1,6 @@
 package com.futbolprime.futbolprime_api.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,5 +27,6 @@ public class Marca {
     private String slug;
 
     @OneToMany(mappedBy = "marca")
+    @JsonManagedReference
     private List<Producto> productos;
 }

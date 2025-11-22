@@ -1,11 +1,17 @@
 package com.futbolprime.futbolprime_api.service;
 
-import com.futbolprime.futbolprime_api.dto.listaDeseos.ActualizarListaDeseosDTO;
-import com.futbolprime.futbolprime_api.dto.listaDeseos.CrearListaDeseosDTO;
+import com.futbolprime.futbolprime_api.dto.listaDeseos.CrearListaDeseosItemDTO;
 import com.futbolprime.futbolprime_api.dto.listaDeseos.ListaDeseosDTO;
+import com.futbolprime.futbolprime_api.dto.listaDeseos.ListaDeseosItemDTO;
+import com.futbolprime.futbolprime_api.dto.producto.ProductoDTO;
 import com.futbolprime.futbolprime_api.model.ListaDeseos;
+import com.futbolprime.futbolprime_api.model.ListaDeseosItem;
+import com.futbolprime.futbolprime_api.model.Producto;
+import com.futbolprime.futbolprime_api.model.Usuario;
+import com.futbolprime.futbolprime_api.repository.ListaDeseosItemRepository;
 import com.futbolprime.futbolprime_api.repository.ListaDeseosRepository;
 import com.futbolprime.futbolprime_api.repository.ProductoRepository;
+import com.futbolprime.futbolprime_api.repository.UsuarioRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,107 +19,111 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ListaDeseosServiceImpl implements ListaDeseosService {
+public class ListaDeseosServiceImpl implements com.futbolprime.futbolprime_api.service.ListaDeseosService {
 
     private final ListaDeseosRepository listaDeseosRepository;
+    private final ListaDeseosItemRepository itemRepository;
+    private final UsuarioRepository usuarioRepository;
     private final ProductoRepository productoRepository;
 
     @Override
-    public List<ListaDeseosDTO> listarPorUsuario(Long usuarioId) {
-        if (usuarioId == null || usuarioId <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "usuarioId es obligatorio y debe ser > 0");
-        }
-        return listaDeseosRepository.findByUsuarioId(usuarioId)
-                .stream()
-                .map(this::toDTO)
-                .toList();
+    public ListaDeseosDTO obtenerPorUsuario(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        ListaDeseos lista = listaDeseosRepository.findByUsuario(usuario)
+                .orElse(ListaDeseos.builder().usuario(usuario).build());
+
+        List<ListaDeseosItemDTO> items = itemRepository.findByListaDeseos(lista)
+                .stream().map(this::toItemDTO).collect(Collectors.toList());
+
+        ListaDeseosDTO dto = new ListaDeseosDTO();
+        dto.setId(lista.getId());
+        dto.setUsuarioId(usuarioId);
+        dto.setItems(items);
+
+        return dto;
     }
 
-
     @Override
-    public ListaDeseosDTO agregar(CrearListaDeseosDTO dto) {
-        if (dto == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payload inválido");
-        if (dto.getUsuarioId() == null || dto.getUsuarioId() <= 0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "usuarioId es obligatorio y debe ser > 0");
-        if (dto.getProductoId() == null || dto.getProductoId() <= 0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "productoId es obligatorio y debe ser > 0");
+    public ListaDeseosItemDTO agregarProducto(CrearListaDeseosItemDTO dto) {
+        Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        Long usuarioId = dto.getUsuarioId();
-        Long productoId = dto.getProductoId();
+        Producto producto = productoRepository.findById(dto.getProductoId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
 
-        // validar existencia de producto (opcional)
-        if (productoRepository != null && !productoRepository.existsById(productoId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con id: " + productoId);
+        ListaDeseos lista = listaDeseosRepository.findByUsuario(usuario)
+                .orElseGet(() -> listaDeseosRepository.save(ListaDeseos.builder().usuario(usuario).build()));
+
+        // Evitar duplicados
+        if (itemRepository.findByListaDeseosAndProducto(lista, producto).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Producto ya existe en la lista de deseos");
         }
 
-        if (listaDeseosRepository.existsByUsuarioIdAndProductoId(usuarioId, productoId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "El producto ya está en la lista de deseos");
-        }
-
-        ListaDeseos item = ListaDeseos.builder()
-                .usuarioId(usuarioId)
-                .productoId(productoId)
+        ListaDeseosItem item = ListaDeseosItem.builder()
+                .listaDeseos(lista)
+                .producto(producto)
                 .build();
 
-        try {
-            ListaDeseos guardado = listaDeseosRepository.save(item);
-            return toDTO(guardado);
-        } catch (Exception ex) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se pudo agregar el item (posible duplicado)");
-        }
+        itemRepository.save(item);
+
+        return toItemDTO(item);
     }
 
     @Override
-    public void eliminar(Long id) {
-        ListaDeseos item = listaDeseosRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Elemento no encontrado en la lista de deseos"
-                ));
+    public void eliminarProducto(Long usuarioId, Long productoId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        listaDeseosRepository.delete(item);
+        ListaDeseos lista = listaDeseosRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lista de deseos no encontrada"));
+
+        Producto producto = productoRepository.findById(productoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+
+        itemRepository.deleteByListaDeseosAndProducto(lista, producto);
     }
-
 
     @Override
-    public ListaDeseosDTO actualizar(Long id, ActualizarListaDeseosDTO dto) {
-        if (id == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id es obligatorio");
-        }
-        if (dto == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payload inválido");
-        }
+    public List<ListaDeseosItemDTO> listarItems(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        ListaDeseos item = listaDeseosRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Elemento no encontrado"));
+        ListaDeseos lista = listaDeseosRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lista de deseos no encontrada"));
 
-        if (dto.getProductoId() != null) {
-            Long nuevoProductoId = dto.getProductoId();
-
-            if (productoRepository != null && !productoRepository.existsById(nuevoProductoId)) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con id: " + nuevoProductoId);
-            }
-
-            // Evitar duplicados para el mismo usuario
-            if (listaDeseosRepository.existsByUsuarioIdAndProductoId(item.getUsuarioId(), nuevoProductoId)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "El producto ya está en la lista de deseos del usuario");
-            }
-
-            item.setProductoId(nuevoProductoId);
-        }
-
-        ListaDeseos actualizado = listaDeseosRepository.save(item);
-        return toDTO(actualizado);
+        return itemRepository.findByListaDeseos(lista).stream()
+                .map(this::toItemDTO)
+                .collect(Collectors.toList());
     }
 
-    private ListaDeseosDTO toDTO(ListaDeseos l) {
-        ListaDeseosDTO dto = new ListaDeseosDTO();
-        dto.setId(l.getId());
-        dto.setUsuarioId(l.getUsuarioId());
-        dto.setProductoId(l.getProductoId());
+    private ListaDeseosItemDTO toItemDTO(ListaDeseosItem item) {
+        ListaDeseosItemDTO dto = new ListaDeseosItemDTO();
+        dto.setId(item.getId());
+
+        Producto producto = item.getProducto();
+
+        // Mapear manualmente para evitar proxy
+        ProductoDTO productoDTO = new ProductoDTO();
+        productoDTO.setSku(producto.getSku());
+        productoDTO.setNombre(producto.getNombre());
+        productoDTO.setPrecio(producto.getPrecio());
+        productoDTO.setOferta(producto.getOferta());
+        productoDTO.setTipo(producto.getTipo());
+        productoDTO.setTalla(producto.getTalla());
+        productoDTO.setColor(producto.getColor());
+
+        if (producto.getMarca() != null) {
+            productoDTO.setMarcaId(producto.getMarca().getId());
+            productoDTO.setMarcaNombre(producto.getMarca().getNombre());
+        }
+
+        dto.setProducto(productoDTO);
         return dto;
     }
 
