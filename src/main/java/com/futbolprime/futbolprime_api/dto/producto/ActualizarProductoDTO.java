@@ -1,4 +1,4 @@
-package com.futbolprime.futbolprime_api.dto;
+package com.futbolprime.futbolprime_api.dto.producto;
 
 import lombok.Data;
 

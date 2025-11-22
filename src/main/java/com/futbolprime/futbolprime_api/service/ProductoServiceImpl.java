@@ -1,14 +1,17 @@
 package com.futbolprime.futbolprime_api.service;
 
-import com.futbolprime.futbolprime_api.dto.ActualizarProductoDTO;
-import com.futbolprime.futbolprime_api.dto.CrearProductoDTO;
-import com.futbolprime.futbolprime_api.dto.ProductoDTO;
+import com.futbolprime.futbolprime_api.dto.producto.ActualizarProductoDTO;
+import com.futbolprime.futbolprime_api.dto.producto.CrearProductoDTO;
+import com.futbolprime.futbolprime_api.dto.producto.ProductoDTO;
 import com.futbolprime.futbolprime_api.model.Producto;
 import com.futbolprime.futbolprime_api.repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +30,10 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     public ProductoDTO buscarPorSku(String sku) {
         Producto producto = productoRepository.findBySku(sku)
-                .orElseThrow(() -> new RuntimeException(("Producto no encontrado con SKU: "+sku)));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Producto no encontrado"
+                ));
         return toDTO(producto);
     }
 
@@ -41,27 +47,57 @@ public class ProductoServiceImpl implements ProductoService {
 
     @Override
     public ProductoDTO crearProducto(CrearProductoDTO dto) {
+
+        if (dto.getSku() == null || dto.getSku().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El SKU es obligatorio");
+        }
+        String skuNormalizado = dto.getSku().trim();
+
+        if (dto.getNombre() == null || dto.getNombre().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre es obligatorio");
+        }
+        String nombreNormalizado = dto.getNombre().trim();
+
+        if (dto.getPrecio() == null || dto.getPrecio() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El precio es obligatorio y debe ser >= 0");
+        }
+
+        if (dto.getStock() == null || dto.getStock() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El stock es obligatorio y debe ser >= 0");
+        }
+
+        Optional<Producto> existente = productoRepository.findBySku(skuNormalizado);
+        if (existente.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un producto con ese SKU: " + skuNormalizado);
+        }
+
+        // Construcción del producto (normalizar campos opcionales)
         Producto producto = Producto.builder()
-                .sku(dto.getSku())
-                .nombre(dto.getNombre())
+                .sku(skuNormalizado)
+                .nombre(nombreNormalizado)
                 .precio(dto.getPrecio())
                 .oferta(dto.getOferta())
-                .tipo(dto.getTipo())
-                .talla(dto.getTalla())
-                .color(dto.getColor())
+                .tipo(dto.getTipo() != null ? dto.getTipo().trim() : null)
+                .talla(dto.getTalla() != null ? dto.getTalla().trim() : null)
+                .color(dto.getColor() != null ? dto.getColor().trim() : null)
                 .stock(dto.getStock())
-                .marca(dto.getMarca())
-                .descripcion(dto.getDescripcion())
-                .imagen(dto.getImagen())
+                .marca(dto.getMarca() != null ? dto.getMarca().trim() : null)
+                .descripcion(dto.getDescripcion() != null ? dto.getDescripcion().trim() : null)
+                .imagen(dto.getImagen() != null ? dto.getImagen().trim() : null)
                 .build();
+
         Producto guardado = productoRepository.save(producto);
         return toDTO(guardado);
     }
 
+
     @Override
     public void eliminarPorSku(String sku) {
         var producto = productoRepository.findBySku(sku)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado con SKU: " + sku));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Producto no encontrado"
+                ));
 
         productoRepository.delete(producto);
     }
@@ -70,7 +106,10 @@ public class ProductoServiceImpl implements ProductoService {
     public ProductoDTO actualizarProducto(String sku, ActualizarProductoDTO dto) {
 
         var producto = productoRepository.findBySku(sku)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Producto no encontrado"
+                ));
 
         // Actualizar solo los campos enviados
         if (dto.getNombre() != null) producto.setNombre(dto.getNombre());

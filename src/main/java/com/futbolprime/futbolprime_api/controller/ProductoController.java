@@ -1,8 +1,8 @@
 package com.futbolprime.futbolprime_api.controller;
 
-import com.futbolprime.futbolprime_api.dto.ActualizarProductoDTO;
-import com.futbolprime.futbolprime_api.dto.CrearProductoDTO;
-import com.futbolprime.futbolprime_api.dto.ProductoDTO;
+import com.futbolprime.futbolprime_api.dto.producto.ActualizarProductoDTO;
+import com.futbolprime.futbolprime_api.dto.producto.CrearProductoDTO;
+import com.futbolprime.futbolprime_api.dto.producto.ProductoDTO;
 import com.futbolprime.futbolprime_api.service.ProductoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,9 +1,8 @@
 package com.futbolprime.futbolprime_api.service;
 
-import com.futbolprime.futbolprime_api.dto.ActualizarProductoDTO;
-import com.futbolprime.futbolprime_api.dto.CrearProductoDTO;
-import com.futbolprime.futbolprime_api.dto.ProductoDTO;
-import com.futbolprime.futbolprime_api.model.Producto;
+import com.futbolprime.futbolprime_api.dto.producto.ActualizarProductoDTO;
+import com.futbolprime.futbolprime_api.dto.producto.CrearProductoDTO;
+import com.futbolprime.futbolprime_api.dto.producto.ProductoDTO;
 
 import java.util.List;
 
