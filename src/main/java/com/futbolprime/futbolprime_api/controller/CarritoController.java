@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/carritos")
@@ -26,7 +25,7 @@ public class CarritoController {
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    public List<CarritoDTO> listarPorUsuario(@PathVariable UUID usuarioId){
+    public List<CarritoDTO> listarPorUsuario(@PathVariable Long usuarioId){
         return carritoService.listarPorUsuario(usuarioId);
     }
 

@@ -1,4 +1,4 @@
-package com.futbolprime.futbolprime_api.service;
+package com.futbolprime.futbolprime_api.service.impl;
 
 import com.futbolprime.futbolprime_api.dto.carrito.*;
 import com.futbolprime.futbolprime_api.model.Carrito;
@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +24,7 @@ public class CarritoServiceImpl implements CarritoService {
     }
 
     @Override
-    public List<CarritoDTO> listarPorUsuario(UUID usuarioId) {
+    public List<CarritoDTO> listarPorUsuario(Long usuarioId) {
         return carritoRepository.findByUsuarioId(usuarioId)
                 .stream()
                 .map(this::mapToDTO)
