@@ -1,4 +1,4 @@
-package com.futbolprime.futbolprime_api.service.impl;
+package com.futbolprime.futbolprime_api.service;
 
 import com.futbolprime.futbolprime_api.dto.carrito.*;
 import com.futbolprime.futbolprime_api.model.Carrito;
