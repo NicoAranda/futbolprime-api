@@ -6,10 +6,15 @@ import java.util.List;
 
 public interface CarritoService {
 
-    List<CarritoDTO> listarTodos();
-    List<CarritoDTO> listarPorUsuario(Long usuarioId);
-    CarritoDTO buscarPorId(Long id);
-    CarritoDTO crearCarrito(CrearCarritoDTO dto);
-    CarritoDTO actualizarCarrito(Long id, ActualizarCarritoDTO dto);
-    void eliminarCarrito(Long id);
+    CarritoDTO obtenerCarritoActivoPorUsuario(Long usuarioId);
+
+    CarritoItemDTO agregarProductoACarrito(CrearCarritoItemDTO dto);
+
+    CarritoItemDTO actualizarItem(Long itemId, ActualizarCarritoItemDTO dto);
+
+    void eliminarItem(Long carritoId, Long productoId);
+
+    void vaciarCarrito(Long carritoId);
+
+    List<CarritoItemDTO> listarItems(Long carritoId);
 }

@@ -1,7 +1,8 @@
 package com.futbolprime.futbolprime_api.controller;
 
-import com.futbolprime.futbolprime_api.dto.carrito.ActualizarCarritoDTO;
-import com.futbolprime.futbolprime_api.dto.carrito.CrearCarritoDTO;
+import com.futbolprime.futbolprime_api.dto.carrito.ActualizarCarritoItemDTO;
+import com.futbolprime.futbolprime_api.dto.carrito.CarritoItemDTO;
+import com.futbolprime.futbolprime_api.dto.carrito.CrearCarritoItemDTO;
 import com.futbolprime.futbolprime_api.dto.carrito.CarritoDTO;
 import com.futbolprime.futbolprime_api.service.CarritoService;
 import lombok.RequiredArgsConstructor;
@@ -19,43 +20,38 @@ public class CarritoController {
 
     private final CarritoService carritoService;
 
-    @GetMapping
-    public List<CarritoDTO> listarTodos(){
-        return carritoService.listarTodos();
-    }
-
     @GetMapping("/usuario/{usuarioId}")
-    public List<CarritoDTO> listarPorUsuario(@PathVariable Long usuarioId){
-        return carritoService.listarPorUsuario(usuarioId);
+    public ResponseEntity<CarritoDTO> obtenerCarrito(@PathVariable Long usuarioId) {
+        return ResponseEntity.ok(carritoService.obtenerCarritoActivoPorUsuario(usuarioId));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CarritoDTO> obtenerPorId(@PathVariable Long id){
-        CarritoDTO dto = carritoService.buscarPorId(id);
-
-        if (dto == null){
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(dto);
+    @PostMapping("/item")
+    public ResponseEntity<CarritoItemDTO> agregarItem(@RequestBody CrearCarritoItemDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(carritoService.agregarProductoACarrito(dto));
     }
 
-    @PostMapping
-    public ResponseEntity<CarritoDTO> crearCarrito(@RequestBody CrearCarritoDTO request){
-        CarritoDTO creado = carritoService.crearCarrito(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+    @PutMapping("/item/{itemId}")
+    public ResponseEntity<CarritoItemDTO> actualizarItem(@PathVariable Long itemId, @RequestBody ActualizarCarritoItemDTO dto) {
+        CarritoItemDTO actualizado = carritoService.actualizarItem(itemId, dto);
+        if (actualizado == null) return ResponseEntity.noContent().build(); // si se eliminó
+        return ResponseEntity.ok(actualizado);
     }
 
-    @PutMapping("/{id}")
-    public CarritoDTO actualizarCarrito(
-            @PathVariable Long id,
-            @RequestBody ActualizarCarritoDTO dto
-    ) {
-        return carritoService.actualizarCarrito(id, dto);
+    @DeleteMapping("/{carritoId}/producto/{productoId}")
+    public ResponseEntity<Void> eliminarProducto(@PathVariable Long carritoId, @PathVariable Long productoId) {
+        carritoService.eliminarItem(carritoId, productoId);
+        return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}")
-    public void eliminarCarrito(@PathVariable Long id){
-        carritoService.eliminarCarrito(id);
+    @DeleteMapping("/{carritoId}/vaciar")
+    public ResponseEntity<Void> vaciar(@PathVariable Long carritoId) {
+        carritoService.vaciarCarrito(carritoId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{carritoId}/items")
+    public ResponseEntity<List<CarritoItemDTO>> listarItems(@PathVariable Long carritoId) {
+        return ResponseEntity.ok(carritoService.listarItems(carritoId));
     }
 
 }

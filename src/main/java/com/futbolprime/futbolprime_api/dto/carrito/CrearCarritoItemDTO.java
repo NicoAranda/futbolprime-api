@@ -3,8 +3,9 @@ package com.futbolprime.futbolprime_api.dto.carrito;
 import lombok.Data;
 
 @Data
-public class CrearCarritoDTO {
+public class CrearCarritoItemDTO {
 
     private Long usuarioId;
-    private String estado;
+    private Long productoId;
+    private Integer cantidad;
 }
