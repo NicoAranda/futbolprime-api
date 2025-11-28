@@ -192,6 +192,7 @@ public class PedidoServiceImpl implements PedidoService{
             itDto.setId(item.getId());
             Producto prod = item.getProducto();
             ProductoDTO prodDto = new ProductoDTO();
+            prodDto.setId(prod.getId());
             prodDto.setSku(prod.getSku());
             prodDto.setNombre(prod.getNombre());
             prodDto.setPrecio(prod.getPrecio());

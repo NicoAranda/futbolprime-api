@@ -110,6 +110,7 @@ public class ListaDeseosServiceImpl implements com.futbolprime.futbolprime_api.s
 
         // Mapear manualmente para evitar proxy
         ProductoDTO productoDTO = new ProductoDTO();
+        productoDTO.setId(producto.getId());
         productoDTO.setSku(producto.getSku());
         productoDTO.setNombre(producto.getNombre());
         productoDTO.setPrecio(producto.getPrecio());

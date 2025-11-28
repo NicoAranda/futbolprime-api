@@ -136,6 +136,7 @@ public class ProductoServiceImpl implements ProductoService {
 
     private ProductoDTO toDTO(Producto p) {
         ProductoDTO dto = new ProductoDTO();
+        dto.setId(p.getId());
         dto.setSku(p.getSku());
         dto.setNombre(p.getNombre());
         dto.setPrecio(p.getPrecio());

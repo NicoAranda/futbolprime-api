@@ -145,6 +145,7 @@ public class CarritoServiceImpl implements CarritoService {
 
         Producto p = item.getProducto();
         ProductoDTO pDto = new ProductoDTO();
+        pDto.setId(p.getId());
         pDto.setSku(p.getSku());
         pDto.setNombre(p.getNombre());
         pDto.setPrecio(p.getPrecio());
