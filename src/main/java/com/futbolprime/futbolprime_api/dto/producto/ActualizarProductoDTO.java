@@ -64,4 +64,3 @@ public class ActualizarProductoDTO {
     )
     private Long marcaId;
 }
-}
