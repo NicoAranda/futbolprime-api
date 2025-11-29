@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "carrito-items")
+@Table(name = "carrito_items")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
