@@ -5,6 +5,7 @@ import com.futbolprime.futbolprime_api.model.Usuario;
 import com.futbolprime.futbolprime_api.repository.UsuarioRepository;
 import com.futbolprime.futbolprime_api.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,9 +25,6 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (dto.getEmail() == null || dto.getEmail().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El email es obligatorio");
         }
-        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo es obligatorio");
-        }
         if (!dto.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo no es válido");
         }
@@ -42,17 +40,26 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (dto.getRol() == null || dto.getRol().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El rol es obligatorio");
         }
-        if (!dto.getRol().equalsIgnoreCase("ADMIN") && !dto.getRol().equalsIgnoreCase("CLIENTE")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El rol debe ser ADMIN o CLIENTE");
-        }
 
+        // Normalizamos el rol
+        String rolNormalizado = dto.getRol().trim();
+
+        // Acepta ADMIN, CLIENTE y VENDEDOR
+        if (!rolNormalizado.equalsIgnoreCase("ADMIN")
+                && !rolNormalizado.equalsIgnoreCase("CLIENTE")
+                && !rolNormalizado.equalsIgnoreCase("VENDEDOR")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El rol debe ser ADMIN, CLIENTE o VENDEDOR"
+            );
+        }
 
         Usuario usuario = Usuario.builder()
                 .nombre(dto.getNombre())
                 .email(dto.getEmail())
                 .password(dto.getPassword())
-                .rol(dto.getRol().toUpperCase())
-                .habilitado(true)
+                .rol(rolNormalizado.toUpperCase())
+                .habilitado(Boolean.TRUE.equals(dto.getHabilitado()))
                 .build();
 
         Usuario guardado = usuarioRepository.save(usuario);
@@ -81,16 +88,36 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public UsuarioDTO actualizarUsuario(Long id, ActualizarUsuarioDTO dto) {
 
+        // 1) Buscar usuario o lanzar 404
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Usuario no encontrado"
                 ));
 
-        // Validaciones opcionales
+        // 2) Actualizar nombre (opcional)
         if (dto.getNombre() != null && !dto.getNombre().isBlank()) {
             usuario.setNombre(dto.getNombre());
         }
 
+        // 3) Actualizar email (opcional)
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            String nuevoEmail = dto.getEmail().trim();
+
+            // Validar formato
+            if (!nuevoEmail.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo no es válido");
+            }
+
+            // Validar que no esté usado por otro usuario
+            if (!nuevoEmail.equalsIgnoreCase(usuario.getEmail())
+                    && usuarioRepository.existsByEmailIgnoreCase(nuevoEmail)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese email");
+            }
+
+            usuario.setEmail(nuevoEmail);
+        }
+
+        // 4) Actualizar contraseña (opcional)
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             if (dto.getPassword().length() < 6) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -99,19 +126,26 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuario.setPassword(dto.getPassword());
         }
 
+        // 5) Actualizar rol (opcional)
         if (dto.getRol() != null && !dto.getRol().isBlank()) {
-            if (!dto.getRol().equalsIgnoreCase("ADMIN")
-                    && !dto.getRol().equalsIgnoreCase("CLIENTE")) {
+
+            String rolNormalizado = dto.getRol().trim();
+
+            if (!rolNormalizado.equalsIgnoreCase("ADMIN")
+                    && !rolNormalizado.equalsIgnoreCase("CLIENTE")){
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "El rol debe ser ADMIN o CLIENTE");
             }
-            usuario.setRol(dto.getRol().toUpperCase());
+
+            usuario.setRol(rolNormalizado.toUpperCase());
         }
 
+        // 6) Actualizar habilitado (opcional)
         if (dto.getHabilitado() != null) {
             usuario.setHabilitado(dto.getHabilitado());
         }
 
+        // 7) Guardar y devolver DTO
         Usuario actualizado = usuarioRepository.save(usuario);
         return toDTO(actualizado);
     }
@@ -125,7 +159,14 @@ public class UsuarioServiceImpl implements UsuarioService {
                         HttpStatus.NOT_FOUND, "Usuario no encontrado"
                 ));
 
-        usuarioRepository.delete(usuario);
+        try {
+            usuarioRepository.delete(usuario);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No se puede eliminar el usuario porque tiene datos asociados"
+            );
+        }
     }
 
     @Override
@@ -155,7 +196,6 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .token(token)
                 .build();
     }
-
 
     private UsuarioDTO toDTO(Usuario usuario) {
         return UsuarioDTO.builder()

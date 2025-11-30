@@ -2,6 +2,7 @@ package com.futbolprime.futbolprime_api.service;
 
 import com.futbolprime.futbolprime_api.dto.usuario.*;
 
+
 import java.util.List;
 
 public interface UsuarioService {
