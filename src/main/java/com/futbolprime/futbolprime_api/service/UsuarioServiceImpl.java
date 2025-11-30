@@ -3,6 +3,7 @@ package com.futbolprime.futbolprime_api.service;
 import com.futbolprime.futbolprime_api.dto.usuario.*;
 import com.futbolprime.futbolprime_api.model.Usuario;
 import com.futbolprime.futbolprime_api.repository.UsuarioRepository;
+import com.futbolprime.futbolprime_api.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.List;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final JwtUtil jwtUtil;
 
     @Override
     public UsuarioDTO crearUsuario(CrearUsuarioDTO dto) {
@@ -143,11 +145,14 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas");
         }
 
+        String token = jwtUtil.generarToken(usuario.getEmail(), usuario.getRol());
+
         return LoginResponseDTO.builder()
                 .id(usuario.getId())
                 .nombre(usuario.getNombre())
                 .email(usuario.getEmail())
                 .rol(usuario.getRol())
+                .token(token)
                 .build();
     }
 

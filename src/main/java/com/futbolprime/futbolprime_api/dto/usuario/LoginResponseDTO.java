@@ -35,4 +35,5 @@ public class LoginResponseDTO {
             example = "CLIENTE"
     )
     private String rol;
+    private String token;
 }
