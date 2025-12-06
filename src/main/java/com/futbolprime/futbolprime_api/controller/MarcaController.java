@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -113,6 +114,7 @@ public class MarcaController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<MarcaDTO> crearMarca(@RequestBody CrearMarcaDTO request) {
         MarcaDTO creado = marcaService.crearMarca(request);
@@ -136,6 +138,7 @@ public class MarcaController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarMarca(@PathVariable Long id) {
         marcaService.eliminarPorId(id);
@@ -160,6 +163,7 @@ public class MarcaController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public MarcaDTO actualizarMarca(
             @PathVariable Long id,

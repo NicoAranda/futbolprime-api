@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -112,6 +113,7 @@ public class ProductoController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ProductoDTO> crearProducto(@RequestBody CrearProductoDTO request) {
         ProductoDTO creado = productoService.crearProducto(request);
@@ -135,6 +137,7 @@ public class ProductoController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{sku}")
     public ResponseEntity<Void> eliminarProducto(@PathVariable String sku) {
         productoService.eliminarPorSku(sku);
@@ -159,6 +162,7 @@ public class ProductoController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{sku}")
     public ProductoDTO actualizarProducto(
             @PathVariable String sku,

@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,10 +49,10 @@ public class PedidoController {
                     )
             }
     )
+    @PreAuthorize("hasRole('CLIENTE')")
     @PostMapping
     public ResponseEntity<PedidoDTO> crearPedido(@RequestBody CrearPedidoDTO dto) {
-        PedidoDTO creado = pedidoService.crearPedido(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+        return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.crearPedido(dto));
     }
 
     // =========================================================================
@@ -72,6 +73,7 @@ public class PedidoController {
                     )
             }
     )
+    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE')")
     @GetMapping("/{id}")
     public ResponseEntity<PedidoDTO> obtenerPedido(@PathVariable Long id) {
         return ResponseEntity.ok(pedidoService.obtenerPedido(id));
@@ -91,6 +93,7 @@ public class PedidoController {
                     )
             }
     )
+    @PreAuthorize("hasRole('CLIENTE')")
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<PedidoDTO>> listarPorUsuario(@PathVariable Long usuarioId) {
         return ResponseEntity.ok(pedidoService.listarPedidosPorUsuario(usuarioId));
@@ -114,6 +117,7 @@ public class PedidoController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/estado")
     public ResponseEntity<PedidoDTO> actualizarEstado(
             @PathVariable Long id,
@@ -144,12 +148,13 @@ public class PedidoController {
                     )
             }
     )
+    @PreAuthorize("hasRole('CLIENTE')")
     @PostMapping("/{id}/pagos")
     public ResponseEntity<PagoDTO> registrarPago(
             @PathVariable Long id,
             @RequestBody RegistrarPagoDTO dto
     ) {
-        PagoDTO pago = pedidoService.registrarPago(id, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(pago);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(pedidoService.registrarPago(id, dto));
     }
 }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -129,6 +130,7 @@ public class CategoriaController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<CategoriaDTO> crearCategoria(@RequestBody CrearCategoriaDTO request) {
         CategoriaDTO creada = categoriaService.crearCategoria(request);
@@ -153,6 +155,7 @@ public class CategoriaController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public CategoriaDTO actualizarCategoria(
             @PathVariable Long id,
@@ -178,6 +181,7 @@ public class CategoriaController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarCategoria(@PathVariable Long id) {
         categoriaService.eliminarCategoria(id);

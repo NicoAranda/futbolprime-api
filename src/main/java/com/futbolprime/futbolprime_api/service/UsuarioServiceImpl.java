@@ -7,6 +7,7 @@ import com.futbolprime.futbolprime_api.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -18,10 +19,15 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
+    // ---------------------------------------------------------
+    //  CREAR USUARIO
+    // ---------------------------------------------------------
     @Override
     public UsuarioDTO crearUsuario(CrearUsuarioDTO dto) {
 
+        // Validar email
         if (dto.getEmail() == null || dto.getEmail().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El email es obligatorio");
         }
@@ -31,33 +37,36 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (usuarioRepository.existsByEmailIgnoreCase(dto.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese email");
         }
+
+        // Validar contraseña
         if (dto.getPassword() == null || dto.getPassword().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña es obligatoria");
         }
         if (dto.getPassword().length() < 6) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña debe tener al menos 6 caracteres");
         }
+
+        // Validar rol
         if (dto.getRol() == null || dto.getRol().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El rol es obligatorio");
         }
 
-        // Normalizamos el rol
-        String rolNormalizado = dto.getRol().trim();
+        String rolNormalizado = dto.getRol().trim().toUpperCase();
 
-        // Acepta ADMIN, CLIENTE y VENDEDOR
-        if (!rolNormalizado.equalsIgnoreCase("ADMIN")
-                && !rolNormalizado.equalsIgnoreCase("CLIENTE")
-                && !rolNormalizado.equalsIgnoreCase("VENDEDOR")) {
+        if (!rolNormalizado.equals("ADMIN") &&
+                !rolNormalizado.equals("CLIENTE") &&
+                !rolNormalizado.equals("VENDEDOR")) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "El rol debe ser ADMIN, CLIENTE o VENDEDOR"
             );
         }
 
+        // Crear usuario
         Usuario usuario = Usuario.builder()
                 .nombre(dto.getNombre())
                 .email(dto.getEmail())
-                .password(dto.getPassword())
+                .password(passwordEncoder.encode(dto.getPassword())) // 👈 encriptada
                 .rol(rolNormalizado.toUpperCase())
                 .habilitado(Boolean.TRUE.equals(dto.getHabilitado()))
                 .build();
@@ -66,6 +75,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         return toDTO(guardado);
     }
 
+    // ---------------------------------------------------------
+    //  OBTENER USUARIO
+    // ---------------------------------------------------------
     @Override
     public UsuarioDTO obtenerUsuario(Long id) {
 
@@ -77,6 +89,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         return toDTO(usuario);
     }
 
+    // ---------------------------------------------------------
+    //  LISTAR USUARIOS
+    // ---------------------------------------------------------
     @Override
     public List<UsuarioDTO> listarUsuarios() {
         return usuarioRepository.findAll()
@@ -85,30 +100,30 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .toList();
     }
 
+    // ---------------------------------------------------------
+    //  ACTUALIZAR USUARIO
+    // ---------------------------------------------------------
     @Override
     public UsuarioDTO actualizarUsuario(Long id, ActualizarUsuarioDTO dto) {
 
-        // 1) Buscar usuario o lanzar 404
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Usuario no encontrado"
                 ));
 
-        // 2) Actualizar nombre (opcional)
+        // Actualizar nombre
         if (dto.getNombre() != null && !dto.getNombre().isBlank()) {
             usuario.setNombre(dto.getNombre());
         }
 
-        // 3) Actualizar email (opcional)
+        // Actualizar email
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
             String nuevoEmail = dto.getEmail().trim();
 
-            // Validar formato
             if (!nuevoEmail.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo no es válido");
             }
 
-            // Validar que no esté usado por otro usuario
             if (!nuevoEmail.equalsIgnoreCase(usuario.getEmail())
                     && usuarioRepository.existsByEmailIgnoreCase(nuevoEmail)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese email");
@@ -117,40 +132,44 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuario.setEmail(nuevoEmail);
         }
 
-        // 4) Actualizar contraseña (opcional)
+        // Actualizar contraseña
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+
             if (dto.getPassword().length() < 6) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "La contraseña debe tener al menos 6 caracteres");
             }
-            usuario.setPassword(dto.getPassword());
+
+            usuario.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        // 5) Actualizar rol (opcional)
+        // Actualizar rol
         if (dto.getRol() != null && !dto.getRol().isBlank()) {
 
-            String rolNormalizado = dto.getRol().trim();
+            String rolNormalizado = dto.getRol().trim().toUpperCase();
 
-            if (!rolNormalizado.equalsIgnoreCase("ADMIN")
-                    && !rolNormalizado.equalsIgnoreCase("CLIENTE")){
+            if (!rolNormalizado.equals("ADMIN") &&
+                    !rolNormalizado.equals("CLIENTE") &&
+                    !rolNormalizado.equals("VENDEDOR")) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "El rol debe ser ADMIN o CLIENTE");
+                        "El rol debe ser ADMIN, CLIENTE o VENDEDOR");
             }
 
-            usuario.setRol(rolNormalizado.toUpperCase());
+            usuario.setRol(rolNormalizado);
         }
 
-        // 6) Actualizar habilitado (opcional)
+        // Actualizar habilitado
         if (dto.getHabilitado() != null) {
             usuario.setHabilitado(dto.getHabilitado());
         }
 
-        // 7) Guardar y devolver DTO
         Usuario actualizado = usuarioRepository.save(usuario);
         return toDTO(actualizado);
     }
 
-
+    // ---------------------------------------------------------
+    //  ELIMINAR USUARIO
+    // ---------------------------------------------------------
     @Override
     public void eliminarUsuario(Long id) {
 
@@ -169,6 +188,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
     }
 
+    // ---------------------------------------------------------
+    //  LOGIN
+    // ---------------------------------------------------------
     @Override
     public LoginResponseDTO login(LoginRequestDTO dto) {
 
@@ -180,12 +202,16 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
 
         Usuario usuario = usuarioRepository.findByEmailIgnoreCase(dto.getEmail())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"
+                ));
 
-        if (!usuario.getPassword().equals(dto.getPassword())) {
+        // Comparar contraseña encriptada
+        if (!passwordEncoder.matches(dto.getPassword(), usuario.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas");
         }
 
+        // Generar token
         String token = jwtUtil.generarToken(usuario.getEmail(), usuario.getRol());
 
         return LoginResponseDTO.builder()
@@ -197,6 +223,9 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .build();
     }
 
+    // ---------------------------------------------------------
+    //  CONVERSIÓN A DTO
+    // ---------------------------------------------------------
     private UsuarioDTO toDTO(Usuario usuario) {
         return UsuarioDTO.builder()
                 .id(usuario.getId())

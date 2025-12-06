@@ -5,6 +5,7 @@ import com.futbolprime.futbolprime_api.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -80,6 +81,7 @@ public class UsuarioController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<UsuarioDTO>> listar() {
         List<UsuarioDTO> lista = usuarioService.listarUsuarios();
@@ -102,6 +104,7 @@ public class UsuarioController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioDTO> obtenerPorId(@PathVariable Long id) {
         UsuarioDTO dto = usuarioService.obtenerUsuario(id);
@@ -124,6 +127,7 @@ public class UsuarioController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDTO> actualizar(
             @PathVariable Long id,
@@ -148,6 +152,7 @@ public class UsuarioController {
                     )
             }
     )
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         usuarioService.eliminarUsuario(id);
