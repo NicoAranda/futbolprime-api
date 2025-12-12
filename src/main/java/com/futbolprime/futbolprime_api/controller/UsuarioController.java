@@ -1,7 +1,10 @@
 package com.futbolprime.futbolprime_api.controller;
 
 import com.futbolprime.futbolprime_api.dto.usuario.*;
+import com.futbolprime.futbolprime_api.model.Usuario;
+import com.futbolprime.futbolprime_api.security.JwtUtil;
 import com.futbolprime.futbolprime_api.service.UsuarioService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.web.server.ResponseStatusException;
 
 
 import java.util.List;
@@ -153,4 +157,23 @@ public class UsuarioController {
         usuarioService.eliminarUsuario(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/perfil")
+    public ResponseEntity<UsuarioDTO> perfil(HttpServletRequest request) {
+
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token no enviado");
+        }
+
+        String token = authHeader.substring(7);
+
+        UsuarioDTO perfil = usuarioService.obtenerPerfil(token);
+
+        return ResponseEntity.ok(perfil);
+    }
+
+
+
 }

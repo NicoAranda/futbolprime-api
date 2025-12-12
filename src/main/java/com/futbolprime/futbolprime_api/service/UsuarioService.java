@@ -16,4 +16,6 @@ public interface UsuarioService {
     void eliminarUsuario(Long id);
 
     LoginResponseDTO login(LoginRequestDTO dto);
+
+    UsuarioDTO obtenerPerfil(String token);
 }

@@ -156,6 +156,20 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .build();
     }
 
+    @Override
+    public UsuarioDTO obtenerPerfil(String token) {
+
+        String email = jwtUtil.extraerEmail(token);
+
+        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Usuario no encontrado"
+                ));
+
+        return toDTO(usuario);
+    }
+
+
 
     private UsuarioDTO toDTO(Usuario usuario) {
         return UsuarioDTO.builder()
